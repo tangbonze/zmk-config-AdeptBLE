@@ -74,12 +74,13 @@
     };
     device_layer {
       display-name = "Device";
-      // Hold the DEVICE key to reach these: k2 = unlock ZMK/DYA Studio
-      // (also enables the BLE connection path), k3 = play runtime macro 0
-      // (created in DYA Studio; empty slot does nothing).
+      // Hold the DEVICE key to reach these: k3 = play runtime macro 0
+      // (created in DYA Studio; an empty slot does nothing). There is no
+      // &studio_unlock binding on purpose: locking is disabled, so the
+      // keyboard is always unlocked.
       bindings = <
-        &bootloader &trans &studio_unlock &rmacro 0
-        &trans                           &bt BT_CLR
+        &bootloader &trans &trans &rmacro 0
+        &trans                       &bt BT_CLR
       >;
     };
     bluetooth_layer {
