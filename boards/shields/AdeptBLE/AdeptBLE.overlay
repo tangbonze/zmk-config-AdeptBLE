@@ -119,7 +119,10 @@
     cs-gpios = <&xiao_d 7 GPIO_ACTIVE_LOW>;
     trackball: trackball@0 {
         status = "okay";
-        compatible = "pixart,pmw3610";
+        // badjeff's driver was renamed to "pixart,pmw3610-alt" so that it no
+        // longer collides with the upstream Zephyr "pixart,pmw3610" driver
+        // shipped in the Zephyr tree used by ZMK main.
+        compatible = "pixart,pmw3610-alt";
         reg = <0>;
         spi-max-frequency = <2000000>;
         irq-gpios = <&xiao_d 10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
