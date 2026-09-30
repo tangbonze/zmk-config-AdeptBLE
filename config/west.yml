@@ -1,21 +1,82 @@
+# Dependencies for DYA Studio support.
+#
+# DYA Studio (cormoran's ZMK Studio enhanced web UI) talks to a patched ZMK
+# that adds the unofficial "Custom Studio Protocol", plus a set of optional
+# modules for the Trackball / Connection / Settings / Troubleshooting tabs.
+#
+# Reference: https://dya-studio-dev.cormoran707.workers.dev/developer-guide
 manifest:
+  version: 1.2
   remotes:
-    - name: zmkfirmware
-      url-base: https://github.com/zmkfirmware
-    - name: badjeff
-      url-base: https://github.com/badjeff
-    # - name: cyboard
-    #   url-base: https://github.com/Cyboard-DigitalTailor
+    - name: cormoran
+      url-base: https://github.com/cormoran
+  defaults:
+    remote: cormoran
+    revision: main
   projects:
+    # ZMK fork with Custom Studio Protocol support (custom RPC subsystems,
+    # BLE connection after &studio_unlock, split relay extensions, ...).
+    # Zephyr is pinned to the revision this fork is based on.
     - name: zmk
-      remote: zmkfirmware
-      revision: main
-      import: app/west.yml
-    - name: zmk-pmw3610-driver
-      remote: badjeff
-      revision: main
-    # - name: zmk-pmw3610-driver
-    #   remote: cyboard
-    #   revision: startup_optimization
+      revision: main+dya
+      clone-depth: 1
+      import:
+        file: app/west.yml
+    - name: zephyr
+      revision: v4.1.0+zmk-fixes+nrf-half-duplex-uart
+      clone-depth: 1
+      import:
+        name-blocklist:
+          - ci-tools
+          - hal_altera
+          - hal_cypress
+          - hal_infineon
+          - hal_microchip
+          - hal_nxp
+          - hal_openisa
+          - hal_xtensa
+          - hal_st
+          - hal_ti
+          - loramac-node
+          - mcuboot
+          - mcumgr
+          - net-tools
+          - openthread
+          - edtt
+          - trusted-firmware-m
+    # Trackball tab: PMW3610 sensor info/diagnostics and runtime settings
+    # (cpi, axis, downshift/sample times, ...) over the custom Studio RPC.
+    # Drop-in replacement for badjeff's driver, devicetree compatible
+    # "cormoran,pmw3610"; do not use both drivers together.
+    - name: zmk-driver-pmw3610-with-custom-studio-rpc
+    # Trackball tab: runtime input processors (pointer/scroll speed,
+    # rotation, axis snap, auto mouse layer, active layers, ...).
+    - name: zmk-module-runtime-input-processor
+    # Connection tab: BLE profile management.
+    - name: zmk-module-ble-management
+    # Connection tab: host OS detection (USB / BLE fingerprinting).
+    - name: zmk-feature-os-detection
+    # Connection tab: per-endpoint / per-OS default layer.
+    - name: zmk-feature-default-layer
+      revision: codex/custom-rpc-rewrite
+      import: true
+    # Settings tab: sleep/idle timeouts and other exposed core settings.
+    - name: zmk-module-settings-rpc
+    # Typed, persistent settings backend shared by the modules above.
+    - name: zmk-feature-custom-settings
+    # Keymap tab: draw the trackball in the layout preview.
+    - name: zmk-feature-module-physical-layout
+    # Keymap tab: macros created/edited in DYA Studio, played with
+    # &rmacro <slot> in the keymap.
+    - name: zmk-feature-runtime-macro
+      import: true
+    # Keymap tab: combos created/edited in DYA Studio.
+    - name: zmk-feature-runtime-combo
+      import: true
+    # Troubleshooting tab: device info and watchdog incident history.
+    - name: zmk-feature-device-info
+    - name: zmk-feature-watchdog
+    # Settings/troubleshooting: battery level history.
+    - name: zmk-module-battery-history
   self:
     path: config

@@ -1,8 +1,10 @@
 #include <behaviors.dtsi>
+#include <behaviors/runtime_macro.dtsi>
 #include <dt-bindings/zmk/bt.h>
 #include <dt-bindings/zmk/keys.h>
 #include <dt-bindings/zmk/pointing.h>
 #include <dt-bindings/zmk/outputs.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
 
 // #include <dt-bindings/zmk/mouse.h>
 
@@ -72,9 +74,12 @@
     };
     device_layer {
       display-name = "Device";
+      // Hold the DEVICE key to reach these: k2 = unlock ZMK/DYA Studio
+      // (also enables the BLE connection path), k3 = play runtime macro 0
+      // (created in DYA Studio; empty slot does nothing).
       bindings = <
-        &bootloader &trans &trans &trans
-        &trans                    &bt BT_CLR
+        &bootloader &trans &studio_unlock &rmacro 0
+        &trans                           &bt BT_CLR
       >;
     };
     bluetooth_layer {
@@ -92,4 +97,28 @@
       >;
     };
   };
+};
+
+// ---------------------------------------------------------------------------
+// Trackball runtime input processors (DYA Studio "Trackball" tab)
+//
+// The defaults live in <input/processors/runtime-input-processor.dtsi>; only
+// the behaviour that is specific to this keyboard is set here. Everything else
+// (speed, rotation, axis snap, inertia, ...) can be changed from DYA Studio
+// and is stored in the keyboard's settings.
+//
+// mouse_runtime_input_processor is deliberately left at its defaults (1:1
+// scaling, no rotation), which matches the static processor chain it replaced.
+// ---------------------------------------------------------------------------
+
+&scroll_runtime_input_processor {
+    // The processor receives raw XY movement and converts it to wheel events.
+    x-codes = <INPUT_REL_X>;
+    y-codes = <INPUT_REL_Y>;
+    xy-to-scroll-enabled;
+    // Preserves the previous 1/10 scroll scaling; adjustable in DYA Studio.
+    scale-divisor = <10>;
+    axis-snap-threshold = <100>;
+    // Only on layers 1 (SCRLM) and 2 (SCRLH), as a bitmask.
+    active-layers = <0x00000006>;
 };

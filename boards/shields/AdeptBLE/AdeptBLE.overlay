@@ -119,7 +119,9 @@
     cs-gpios = <&xiao_d 7 GPIO_ACTIVE_LOW>;
     trackball: trackball@0 {
         status = "okay";
-        compatible = "pixart,pmw3610";
+        // DYA Studio compatible driver (same devicetree options as badjeff's
+        // "pixart,pmw3610", but with custom Studio RPC support).
+        compatible = "cormoran,pmw3610";
         reg = <0>;
         spi-max-frequency = <2000000>;
         irq-gpios = <&xiao_d 10 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
@@ -127,30 +129,59 @@
         evt-type = <INPUT_EV_REL>;
         x-input-code = <INPUT_REL_X>;
         y-input-code = <INPUT_REL_Y>;
+        // Readable key prefix for the runtime settings ("cpi@trackball", ...)
+        // shown in DYA Studio.
+        settings-id = "trackball";
 
         force-awake;
     };
 };
 
 / {
-  trackball_listener: trackball_listner {
+  trackball_listener: trackball_listener {
     compatible = "zmk,input-listener";
     device = <&trackball>;
-    input-processors = <&zip_xy_swap_mapper>;
 
-    default {
-        layers = <DEFAULT>;
-        process-next;
-    };
+    // Base chain, used on every layer without an override below. The sensor
+    // is mounted rotated, hence the static XY swap; after it the DYA Studio
+    // runtime processor applies the speed / rotation / axis snap / inertia
+    // settings configured from the web UI (defaults keep the previous feel:
+    // 1:1 scale, no rotation).
+    input-processors = <&zip_xy_swap_mapper &mouse_runtime_input_processor>;
+
+    // SCRLM / SCRLH: the ball acts as a wheel. The X invert and swap keep the
+    // previous direction; the runtime processor converts XY movement to wheel
+    // events and its divisor (see the keymap) preserves the 1/10 scaling.
     scroll {
         layers = <SCRLM SCRLH>;
-        input-processors = <&zip_xy_transform (INPUT_TRANSFORM_X_INVERT)>, <&zip_xy_swap_mapper>, <&zip_xy_scaler 1 10>, <&zip_xy_to_scroll_mapper>;
-        process-next;
+        input-processors = <&zip_xy_transform (INPUT_TRANSFORM_X_INVERT)>, <&zip_xy_swap_mapper>, <&scroll_runtime_input_processor>;
     };
+
+    // SNIPE: 1/5 speed slow movement, then the runtime processor.
     snipe {
         layers = <SNIPE>;
-        input-processors = <&zip_xy_scaler 1 5>;
-        process-next;
+        input-processors = <&zip_xy_scaler 1 5>, <&zip_xy_swap_mapper>, <&mouse_runtime_input_processor>;
     };
   };
-}; 
+
+  // Trackball marker for the DYA Studio layout preview
+  // (zmk-feature-module-physical-layout). Coordinates and size use the same
+  // 0.01 unit scale as the key physical attributes above: it sits between the
+  // two bottom keys. Adjust x / y / size if it does not match the hardware.
+  trackball_layout: trackball_layout {
+      compatible = "cormoran,physical-layout-trackball";
+      display-name = "Trackball";
+      size = <90>;
+      x = <55>;
+      y = <105>;
+
+      linked-device-identifiers = "mouse", "scroll";
+      linked-subsystems = "cormoran_rip", "cormoran_rip";
+  };
+};
+
+// Must come last: the runtime input processor definitions pull in
+// dt-bindings/zmk/keys.h, which redefines RC(keycode) for modifiers and would
+// otherwise clash with the RC(row, col) matrix macros used above.
+#include <input/processors/runtime-input-processor.dtsi>
+

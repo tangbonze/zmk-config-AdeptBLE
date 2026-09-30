@@ -16,9 +16,24 @@
 #     cmake-args: -DCONFIG_ZMK_USB_LOGGING=y
 #     artifact-name: corne_left_with_logging
 #
+# The board target is the Zephyr hardware model v2 name: the XIAO nRF52840
+# ZMK variant is `xiao_ble//zmk` (the old `seeeduino_xiao_ble` no longer
+# exists in Zephyr 4.1 / ZMK main).
 ---
 include:
-  - board: seeeduino_xiao_ble
+  # Normal firmware: ZMK Studio + DYA Studio over the USB CDC-ACM endpoint.
+  - board: xiao_ble//zmk
     shield: AdeptBLE
     snippet: studio-rpc-usb-uart
     cmake-args: -DCONFIG_ZMK_STUDIO=y
+    artifact-name: AdeptBLE
+
+  # Flash this once to wipe every stored setting (keymap edits, custom
+  # settings, battery history, BLE pairings) and start over from the
+  # firmware defaults. It erases settings on every boot, so do not keep it
+  # flashed on the keyboard.
+  - board: xiao_ble//zmk
+    shield: AdeptBLE
+    snippet: studio-rpc-usb-uart
+    cmake-args: -DCONFIG_ZMK_STUDIO=y -DCONFIG_ZMK_SETTINGS_RESET_ON_START=y
+    artifact-name: AdeptBLE_reset
