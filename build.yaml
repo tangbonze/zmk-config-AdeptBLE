@@ -16,9 +16,12 @@
 #     cmake-args: -DCONFIG_ZMK_USB_LOGGING=y
 #     artifact-name: corne_left_with_logging
 #
+# The board target uses the Zephyr hardware model v2 name introduced with
+# Zephyr 4.1 / ZMK main: the XIAO nRF52840 ZMK variant is `xiao_ble//zmk`
+# (the old `seeeduino_xiao_ble` board no longer exists).
 ---
 include:
-  - board: seeeduino_xiao_ble
+  - board: xiao_ble//zmk
     shield: AdeptBLE
     snippet: studio-rpc-usb-uart
     cmake-args: -DCONFIG_ZMK_STUDIO=y
